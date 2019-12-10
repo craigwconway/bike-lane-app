@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'bikelaneapp
+
+  Glass in the Bike Lane
+
+  '
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: Prod
+  RegionName:
+    Type: String
+    Default: us-west-2
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 19
+Resources:
+  BikeLaneApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: EnvironmentName
+      Auth:
+        Authorizers:
+          BikeLaneCognitoAuth:
+            UserPoolArn: arn:aws:cognito-idp:us-west-2:359327554025:userpool/us-west-2_zVwjTWe9y
+  ReportTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: userId
+        AttributeType: S
+      - AttributeName: updated
+        AttributeType: N
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      GlobalSecondaryIndexes:
+      - IndexName: userId
+        KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        Projection:
+          ProjectionType: ALL
+      - IndexName: updated
+        KeySchema:
+        - AttributeName: updated
+          KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        Projection:
+          ProjectionType: ALL
+  ReportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://bikelaneapp-sam-test/47cc6287f38918bc7a3f5698363c89ee
+      Handler: report.handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: ReportTable
+      Events:
+        ReportApi:
+          Type: Api
+          Properties:
+            Path: /report
+            Method: ANY
+            RestApiId:
+              Ref: BikeLaneApi
+            Auth:
+              Authorizer: BikeLaneCognitoAuth
+      Environment:
+        Variables:
+          ENVIRONMENT_NAME:
+            Ref: EnvironmentName
+          REGION:
+            Ref: RegionName
+          REPORT_TABLE:
+            Ref: ReportTable
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL for ReportFunction
+    Value:
+      Fn::Sub: https://${BikeLaneApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/report/
