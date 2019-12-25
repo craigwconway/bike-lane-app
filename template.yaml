@@ -16,7 +16,7 @@ Parameters:
 Globals:
   Function:
     Runtime: python3.7
-    Timeout: 19
+    Timeout: 5
 
 Resources:
   BikeLaneApi:
@@ -66,6 +66,19 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  ProfileTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S # cognito sub
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
   ReportFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -86,8 +99,29 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT_NAME: !Ref EnvironmentName
-          REGION: !Ref RegionName
           REPORT_TABLE: !Ref ReportTable
+
+  ProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions
+      Handler: profile.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProfileTable
+      Events:
+        ProfileApi:
+          Type: Api
+          Properties:
+            Path: /profile
+            Method: ANY
+            RestApiId: !Ref BikeLaneApi
+            Auth:
+              Authorizer: BikeLaneCognitoAuth
+      Environment:
+        Variables:
+          ENVIRONMENT_NAME: !Ref EnvironmentName
+          PROFILE_TABLE: !Ref ProfileTable
 
 Outputs:
   ApiEndpoint:

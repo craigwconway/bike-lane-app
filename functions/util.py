@@ -6,7 +6,8 @@ import urllib.request
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 
-# Environment variables
+
+ENCODING = 'utf-8'
 REGION = os.environ['REGION']
 userpool_id = os.environ['userpool_id']
 app_client_id = os.environ['app_client_id']
@@ -17,7 +18,7 @@ keys_url = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.forma
     REGION, userpool_id)
 with urllib.request.urlopen(keys_url) as f:
     response = f.read()
-keys = json.loads(response.decode('utf-8'))['keys']
+keys = json.loads(response.decode(ENCODING))['keys']
 
 
 # https://github.com/awslabs/aws-support-tools/blob/master/Cognito/decode-verify-jwt/decode-verify-jwt.py
@@ -33,8 +34,8 @@ def get_user(token):
         return False
     public_key = jwk.construct(keys[key_index])
     message, encoded_signature = str(token).rsplit('.', 1)
-    decoded_signature = base64url_decode(encoded_signature.encode('utf-8'))
-    if not public_key.verify(message.encode("utf8"), decoded_signature):
+    decoded_signature = base64url_decode(encoded_signature.encode(ENCODING))
+    if not public_key.verify(message.encode(ENCODING), decoded_signature):
         return False
     claims = jwt.get_unverified_claims(token)
     if time.time() > claims['exp']:
@@ -51,22 +52,21 @@ class DecimalEncoder(json.JSONEncoder):
         if isinstance(o, decimal.Decimal):
             if o % 1 > 0:
                 return float(o)
-            else:
-                return int(o)
+            return int(o)
         return super(DecimalEncoder, self).default(o)
 
 
 def response(status=200, body=''):
+    try:
+        body = json.dumps(body, cls=DecimalEncoder)
+    except:
+        body = 'Error decoding json response'
+        status = 500
     return {
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
         },
-        "body": json.dumps(body, cls=DecimalEncoder),
+        'body': body
     }
-
-
-def dump(obj):
-    for attr in dir(obj):
-        print("obj.%s = %r" % (attr, getattr(obj, attr)))
