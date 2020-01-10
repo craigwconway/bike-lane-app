@@ -85,11 +85,11 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
 
-  ReportFunction:
+  BikeLaneApiFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src
-      Handler: functions.routes.handler
+      Handler: bikelaneapi.routes.handler
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ReportTable
@@ -114,5 +114,5 @@ Resources:
 
 Outputs:
   ApiEndpoint:
-    Description: "API Gateway endpoint URL for ReportFunction"
-    Value: !Sub "https://${BikeLaneApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/report/"
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${BikeLaneApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/"

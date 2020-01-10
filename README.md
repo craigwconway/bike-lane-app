@@ -1,3 +1,3 @@
-# bike-lane-app
+# Glass in the Bikelane
 
-Glass in the Bike Lane
+Serverless API backend supporting the Glass in the Bike Lane app.

@@ -3,8 +3,8 @@ import re
 
 import boto3
 
-from functions.report import ReportDAO
-from functions.util import user_from_jwt, response
+from bikelaneapi.report import ReportDAO
+from bikelaneapi.util import user_from_jwt, response
 
 
 def handler(event, context):

@@ -1,6 +1,6 @@
 import pytest
 
-from functions.report import ReportDAO
+from bikelaneapi.report import ReportDAO
 
 VALID_REPORT = {
     'latitude': 0.0,

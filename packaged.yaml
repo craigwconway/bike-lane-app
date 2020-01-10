@@ -79,11 +79,11 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-  ReportFunction:
+  BikeLaneApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://bikelaneapp-sam-test/f51ccbd1b4ef89c399e09ab12f3c9294
-      Handler: functions.routes.handler
+      CodeUri: s3://bikelaneapp-sam-test/0f9000d81ac9d6c8394079038e427f06
+      Handler: bikelaneapi.routes.handler
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -115,6 +115,6 @@ Resources:
             Ref: CognitoClientId
 Outputs:
   ApiEndpoint:
-    Description: API Gateway endpoint URL for ReportFunction
+    Description: API Gateway endpoint URL
     Value:
-      Fn::Sub: https://${BikeLaneApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/report/
+      Fn::Sub: https://${BikeLaneApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/
