@@ -3,26 +3,20 @@ import json
 import time
 import decimal
 import urllib.request
+
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 
 
-ENCODING = 'utf-8'
-REGION = os.environ['REGION']
-userpool_id = os.environ['userpool_id']
-app_client_id = os.environ['app_client_id']
-
-# download only on cold start
-# https://aws.amazon.com/blogs/compute/container-reuse-in-lambda/
+# https://github.com/awslabs/aws-support-tools/blob/master/Cognito/decode-verify-jwt/decode-verify-jwt.py
 keys_url = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(
-    REGION, userpool_id)
+    os.environ['REGION'], os.environ['USER_POOL'])
 with urllib.request.urlopen(keys_url) as f:
     response = f.read()
-keys = json.loads(response.decode(ENCODING))['keys']
+keys = json.loads(response.decode('utf-8'))['keys']
 
 
-# https://github.com/awslabs/aws-support-tools/blob/master/Cognito/decode-verify-jwt/decode-verify-jwt.py
-def get_user(token):
+def user_from_jwt(token):
     headers = jwt.get_unverified_headers(token)
     kid = headers['kid']
     key_index = -1
@@ -34,14 +28,16 @@ def get_user(token):
         return False
     public_key = jwk.construct(keys[key_index])
     message, encoded_signature = str(token).rsplit('.', 1)
-    decoded_signature = base64url_decode(encoded_signature.encode(ENCODING))
-    if not public_key.verify(message.encode(ENCODING), decoded_signature):
+    decoded_signature = base64url_decode(encoded_signature.encode('utf-8'))
+    if not public_key.verify(message.encode('utf8'), decoded_signature):
         return False
     claims = jwt.get_unverified_claims(token)
     if time.time() > claims['exp']:
         return False
-    if claims['aud'] != app_client_id:
-        return False
+    print('Sub:{} Claim:{} ENV:{}'.format(
+        claims['sub'], claims['aud'], os.environ['CLIENT_ID']))
+    # if claims['aud'] != os.environ['CLIENT_ID']:
+    #     return False
     return claims
 
 

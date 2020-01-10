@@ -7,7 +7,7 @@ import decimal
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
-from util import get_user, response
+from functions.util import get_user, response
 
 
 dynamodb = boto3.resource('dynamodb')

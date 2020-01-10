@@ -12,10 +12,16 @@ Parameters:
   RegionName:
     Type: String
     Default: us-west-2
+  CognitoUserPoolId:
+    Type: String
+    Default: us-west-2_zVwjTWe9y
+  CognitoClientId:
+    Type: String
+    Default: 1r73fbd73ghm0unf3eaclqm6fb
 Globals:
   Function:
     Runtime: python3.7
-    Timeout: 19
+    Timeout: 5
 Resources:
   BikeLaneApi:
     Type: AWS::Serverless::Api
@@ -61,20 +67,35 @@ Resources:
           WriteCapacityUnits: 5
         Projection:
           ProjectionType: ALL
+  ProfileTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
   ReportFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://bikelaneapp-sam-test/47cc6287f38918bc7a3f5698363c89ee
-      Handler: report.handler
+      CodeUri: s3://bikelaneapp-sam-test/f51ccbd1b4ef89c399e09ab12f3c9294
+      Handler: functions.routes.handler
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: ReportTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: ProfileTable
       Events:
         ReportApi:
           Type: Api
           Properties:
-            Path: /report
+            Path: /{proxy+}
             Method: ANY
             RestApiId:
               Ref: BikeLaneApi
@@ -84,10 +105,14 @@ Resources:
         Variables:
           ENVIRONMENT_NAME:
             Ref: EnvironmentName
-          REGION:
-            Ref: RegionName
           REPORT_TABLE:
             Ref: ReportTable
+          REGION:
+            Ref: RegionName
+          USER_POOL:
+            Ref: CognitoUserPoolId
+          CLIENT_ID:
+            Ref: CognitoClientId
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL for ReportFunction

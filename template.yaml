@@ -12,6 +12,12 @@ Parameters:
   RegionName:
     Type: String
     Default: us-west-2
+  CognitoUserPoolId:
+    Type: String
+    Default: us-west-2_zVwjTWe9y
+  CognitoClientId:
+    Type: String
+    Default: 1r73fbd73ghm0unf3eaclqm6fb
 
 Globals:
   Function:
@@ -82,16 +88,18 @@ Resources:
   ReportFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions
-      Handler: report.handler
+      CodeUri: src
+      Handler: functions.routes.handler
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ReportTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProfileTable
       Events:
         ReportApi:
           Type: Api
           Properties:
-            Path: /report
+            Path: /{proxy+}
             Method: ANY
             RestApiId: !Ref BikeLaneApi
             Auth:
@@ -100,28 +108,9 @@ Resources:
         Variables:
           ENVIRONMENT_NAME: !Ref EnvironmentName
           REPORT_TABLE: !Ref ReportTable
-
-  ProfileFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions
-      Handler: profile.handler
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ProfileTable
-      Events:
-        ProfileApi:
-          Type: Api
-          Properties:
-            Path: /profile
-            Method: ANY
-            RestApiId: !Ref BikeLaneApi
-            Auth:
-              Authorizer: BikeLaneCognitoAuth
-      Environment:
-        Variables:
-          ENVIRONMENT_NAME: !Ref EnvironmentName
-          PROFILE_TABLE: !Ref ProfileTable
+          REGION: !Ref RegionName
+          USER_POOL: !Ref CognitoUserPoolId
+          CLIENT_ID: !Ref CognitoClientId
 
 Outputs:
   ApiEndpoint:
